@@ -1,0 +1,58 @@
+// Prisma Schema for ConsultGPT
+// AI Consulting Assistant with ChatGPT + Crustdata
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Chat model - represents a conversation session
+model Chat {
+  id        String    @id @default(cuid())
+  title     String    @default("New Chat")
+  userId    String?   // Optional user ID for future auth
+  
+  // Relations
+  messages  Message[]
+  
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([updatedAt])
+  @@map("chats")
+}
+
+// Message model - individual messages in a chat
+model Message {
+  id          String   @id @default(cuid())
+  chatId      String
+  role        Role
+  content     String   @db.Text
+  
+  // Optional fields for rich messages
+  attachments Json?    // Array of file attachments
+  toolCalls   Json?    // Array of Crustdata tool calls
+  componentData Json?  // Dynamic component data (charts, tables, etc.)
+  
+  // Relations
+  chat        Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([chatId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// Enum for message roles
+enum Role {
+  USER
+  ASSISTANT
+}
